@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Behaviour & Cleanliness Calculator</title>
+<style>
+  :root{
+    --ink:#1b2330;
+    --paper:#ffffff;
+    --line:#c9d2dd;
+    --line-strong:#8d9bad;
+    --bg:#eef1f5;
+    --good:#2e9e5b;
+    --good-bg:#e3f5ea;
+    --okay:#d99100;
+    --okay-bg:#fbf2dc;
+    --bad:#d4453b;
+    --bad-bg:#fbe6e4;
+    --accent:#2f5fce;
+    --muted:#6b7888;
+    --shadow:0 1px 2px rgba(20,35,60,.06),0 4px 16px rgba(20,35,60,.06);
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;
+    background:var(--bg);color:var(--ink);line-height:1.4;
+    padding:20px 16px 140px;
+  }
+  .wrap{max-width:1180px;margin:0 auto}
+  header.top{
+    display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 16px;margin-bottom:6px;
+  }
+  header.top h1{
+    font-size:1.35rem;letter-spacing:.3px;margin:0;font-weight:800;
+  }
+  header.top .sub{color:var(--muted);font-size:.9rem}
+  .class-row{
+    display:flex;align-items:center;gap:10px;margin:14px 0 20px;flex-wrap:wrap;
+  }
+  .class-row label{font-weight:700;font-size:.9rem}
+  .class-row input{
+    border:1px solid var(--line-strong);border-radius:8px;padding:8px 12px;
+    font-size:.95rem;min-width:120px;background:var(--paper);
+  }
+  .legend{
+    display:flex;gap:14px;flex-wrap:wrap;align-items:center;margin-left:auto;
+    font-size:.82rem;color:var(--muted)
+  }
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .dot{width:14px;height:14px;border-radius:4px;display:inline-block;border:1px solid}
+  .dot.good{background:var(--good-bg);border-color:var(--good)}
+  .dot.okay{background:var(--okay-bg);border-color:var(--okay)}
+  .dot.bad{background:var(--bad-bg);border-color:var(--bad)}
+  .dot.blank{background:#fff;border-color:var(--line-strong)}
+
+  .grid{
+    display:grid;grid-template-columns:repeat(3,1fr);gap:16px;
+  }
+  @media(max-width:920px){.grid{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:620px){.grid{grid-template-columns:1fr}}
+
+  .block{
+    background:var(--paper);border:1.5px solid #111;border-radius:10px;
+    overflow:hidden;box-shadow:var(--shadow);
+  }
+  .block h2{
+    margin:0;font-size:.95rem;font-weight:800;letter-spacing:.6px;text-align:center;
+    padding:10px;background:#f3f6fb;border-bottom:1.5px solid #111;text-transform:uppercase;
+  }
+  .block.clean h2{background:#eef4ff}
+  table{width:100%;border-collapse:collapse;font-size:.82rem;border:1.5px solid #111}
+  th,td{padding:0;text-align:center;border:1px solid #111}
+  thead th{
+    font-size:.72rem;color:var(--muted);font-weight:700;padding:6px 2px;
+    border:1px solid #111;background:#f3f6fb;
+  }
+  .col-no{width:30px}
+  .col-lbl{width:64px}
+  tbody tr{border-bottom:1px solid #111}
+  td.no{font-weight:700;color:var(--muted);font-size:.78rem}
+  td.lbl{font-weight:700;color:var(--muted);font-size:.72rem;white-space:nowrap}
+  .cell{padding:4px 3px}
+  .face{
+    width:30px;height:30px;border-radius:6px;border:1.5px solid #111;
+    background:#fff;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;
+    transition:transform .06s ease, background .12s ease, border-color .12s ease;
+    padding:0;
+  }
+  .face:hover{transform:scale(1.08)}
+  .face:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .face svg{width:18px;height:18px;display:block;color:#aab4c2}
+  .face.on.good{background:var(--good-bg);border-color:var(--good)}
+  .face.on.good svg{color:var(--good)}
+  .face.on.okay{background:var(--okay-bg);border-color:var(--okay)}
+  .face.on.okay svg{color:var(--okay)}
+  .face.on.bad{background:var(--bad-bg);border-color:var(--bad)}
+  .face.on.bad svg{color:var(--bad)}
+  tr.blank-row td.no, tr.blank-row td.lbl{color:#c2350c}
+
+  /* results dock */
+  .dock{
+    position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line-strong);
+    box-shadow:0 -4px 20px rgba(20,35,60,.08);padding:12px 16px;z-index:20;
+  }
+  .dock-inner{max-width:1180px;margin:0 auto;display:flex;gap:18px;align-items:stretch;flex-wrap:wrap}
+  .score{
+    flex:1 1 260px;border:1px solid var(--line);border-radius:12px;padding:12px 16px;
+    display:flex;align-items:center;gap:16px;background:#fbfcfe;
+  }
+  .score .pct{font-size:2rem;font-weight:800;line-height:1;min-width:96px}
+  .score.beh .pct{color:var(--accent)}
+  .score.cln .pct{color:#1f9d74}
+  .score .meta{font-size:.8rem;color:var(--muted)}
+  .score .meta b{color:var(--ink)}
+  .score .title{font-size:.78rem;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+  .breakdown{display:flex;gap:10px;margin-top:6px;font-size:.74rem;flex-wrap:wrap}
+  .breakdown span{display:inline-flex;align-items:center;gap:4px}
+  .pill{padding:1px 7px;border-radius:20px;font-weight:700}
+  .pill.good{background:var(--good-bg);color:var(--good)}
+  .pill.okay{background:var(--okay-bg);color:var(--okay)}
+  .pill.bad{background:var(--bad-bg);color:var(--bad)}
+  .pill.blank{background:#eef1f5;color:#6b7888}
+  .actions{display:flex;align-items:center}
+  .reset{
+    border:1px solid var(--line-strong);background:#fff;border-radius:9px;padding:10px 16px;
+    font-weight:700;cursor:pointer;font-size:.85rem;color:var(--ink)
+  }
+  .reset:hover{background:#f3f6fb}
+  .hint{font-size:.78rem;color:var(--muted);margin:2px 0 16px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1>Behaviour &amp; Cleanliness Calculator</h1>
+    <span class="sub">2026&ndash;27 weekly tracker</span>
+    <div class="legend">
+      <span><i class="dot good"></i>Good = 3</span>
+      <span><i class="dot okay"></i>Okay = 2</span>
+      <span><i class="dot bad"></i>Bad = 1</span>
+      <span><i class="dot blank"></i>Blank = 0</span>
+    </div>
+  </header>
+
+  <div class="class-row">
+    <label for="cls">Class</label>
+    <input id="cls" type="text" placeholder="e.g. 8-A" autocomplete="off">
+    <span class="hint" style="margin:0">Click a face to mark a period. Click the same face again to clear it back to blank.</span>
+  </div>
+
+  <div class="grid" id="grid"></div>
+</div>
+
+<div class="dock">
+  <div class="dock-inner">
+    <div class="score beh">
+      <div class="pct" id="behPct">0.0%</div>
+      <div>
+        <div class="title">Behaviour</div>
+        <div class="meta">Marked <b id="behMarked">0</b>/50 &middot; Points <b id="behPts">0</b>/150</div>
+        <div class="breakdown" id="behBreak"></div>
+      </div>
+    </div>
+    <div class="score cln">
+      <div class="pct" id="clnPct">0.0%</div>
+      <div>
+        <div class="title">Cleanliness</div>
+        <div class="meta">Marked <b id="clnMarked">0</b>/10 &middot; Points <b id="clnPts">0</b>/30</div>
+        <div class="breakdown" id="clnBreak"></div>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="reset" id="reset">Clear all</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const FACES = {
+  good:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9.5" fill="none"/><circle cx="8.5" cy="10" r="1.1" fill="currentColor" stroke="none"/><circle cx="15.5" cy="10" r="1.1" fill="currentColor" stroke="none"/><path d="M8 14.5c1 1.6 2.4 2.4 4 2.4s3-.8 4-2.4" fill="none"/></svg>',
+  okay:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9.5" fill="none"/><circle cx="8.5" cy="10" r="1.1" fill="currentColor" stroke="none"/><circle cx="15.5" cy="10" r="1.1" fill="currentColor" stroke="none"/><path d="M8.2 15h7.6" fill="none"/></svg>',
+  bad:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9.5" fill="none"/><circle cx="8.5" cy="10" r="1.1" fill="currentColor" stroke="none"/><circle cx="15.5" cy="10" r="1.1" fill="currentColor" stroke="none"/><path d="M8 16.6c1-1.6 2.4-2.4 4-2.4s3 .8 4 2.4" fill="none"/></svg>'
+};
+const POINTS = {good:3, okay:2, bad:1};
+const ORDER = ['good','okay','bad'];
+
+// state: object of cellId -> 'good'|'okay'|'bad'|null
+const state = {};
+
+const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday'];
+const CLEAN_LABELS = ['MON-3rd','MON-7th','TUE-3rd','TUE-7th','WED-3rd','WED-7th','THU-3rd','THU-7th','FRI-3rd','FRI-7th'];
+
+function makeFace(id, kind){
+  const b=document.createElement('button');
+  b.className='face '+kind;
+  b.type='button';
+  b.innerHTML=FACES[kind];
+  b.setAttribute('aria-label',kind);
+  b.dataset.id=id;
+  b.dataset.kind=kind;
+  b.addEventListener('click',()=>toggle(id,kind,b));
+  return b;
+}
+
+function toggle(id,kind){
+  state[id] = (state[id]===kind) ? null : kind;
+  render();
+}
+
+function buildBlock(title, rowDefs, isClean){
+  const block=document.createElement('div');
+  block.className='block'+(isClean?' clean':'');
+  const h=document.createElement('h2');h.textContent=title;block.appendChild(h);
+  const table=document.createElement('table');
+  table.innerHTML=`<thead><tr>
+    <th class="${isClean?'col-lbl':'col-no'}">${isClean?'Day':'No.'}</th>
+    <th>Good</th><th>Okay</th><th>Bad</th></tr></thead>`;
+  const tb=document.createElement('tbody');
+  rowDefs.forEach(rd=>{
+    const tr=document.createElement('tr');
+    tr.dataset.row=rd.id;
+    const first=document.createElement('td');
+    first.className=isClean?'lbl':'no';
+    first.textContent=rd.label;
+    tr.appendChild(first);
+    ORDER.forEach(kind=>{
+      const td=document.createElement('td');td.className='cell';
+      td.appendChild(makeFace(rd.id,kind));
+      tr.appendChild(td);
+    });
+    tb.appendChild(tr);
+  });
+  table.appendChild(tb);
+  block.appendChild(table);
+  return block;
+}
+
+function buildGrid(){
+  const grid=document.getElementById('grid');
+  DAYS.forEach((day,di)=>{
+    const rows=[];
+    for(let p=1;p<=10;p++) rows.push({id:`b_${di}_${p}`,label:String(p)});
+    grid.appendChild(buildBlock(day,rows,false));
+  });
+  const cleanRows=CLEAN_LABELS.map((l,i)=>({id:`c_${i}`,label:l}));
+  grid.appendChild(buildBlock('Cleanliness',cleanRows,true));
+}
+
+function countSet(prefix,total){
+  const c={good:0,okay:0,bad:0,blank:0};
+  Object.keys(state).forEach(id=>{
+    if(id.startsWith(prefix) && state[id]) c[state[id]]++;
+  });
+  const marked=c.good+c.okay+c.bad;
+  c.blank=total-marked;
+  return c;
+}
+
+// formula: (G*3 + O*2 + B*1) / ((G+O+B+Blank)*3) * 100
+function score(c,total){
+  const pts=c.good*3+c.okay*2+c.bad*1;
+  const max=total*3;
+  const pct=max? (pts/max*100):0;
+  return {pts,max,pct,marked:c.good+c.okay+c.bad};
+}
+
+function breakHTML(c){
+  return `<span class="pill good">G ${c.good}</span>
+          <span class="pill okay">O ${c.okay}</span>
+          <span class="pill bad">B ${c.bad}</span>
+          <span class="pill blank">Blank ${c.blank}</span>`;
+}
+
+function render(){
+  // faces
+  document.querySelectorAll('.face').forEach(b=>{
+    const on = state[b.dataset.id]===b.dataset.kind;
+    b.classList.toggle('on',on);
+  });
+  // blank-row highlight
+  document.querySelectorAll('tbody tr').forEach(tr=>{
+    tr.classList.toggle('blank-row', !state[tr.dataset.row]);
+  });
+
+  const beh=countSet('b_',50), bs=score(beh,50);
+  document.getElementById('behPct').textContent=bs.pct.toFixed(1)+'%';
+  document.getElementById('behMarked').textContent=bs.marked;
+  document.getElementById('behPts').textContent=bs.pts;
+  document.getElementById('behBreak').innerHTML=breakHTML(beh);
+
+  const cln=countSet('c_',10), cs=score(cln,10);
+  document.getElementById('clnPct').textContent=cs.pct.toFixed(1)+'%';
+  document.getElementById('clnMarked').textContent=cs.marked;
+  document.getElementById('clnPts').textContent=cs.pts;
+  document.getElementById('clnBreak').innerHTML=breakHTML(cln);
+}
+
+document.getElementById('reset').addEventListener('click',()=>{
+  for(const k in state) delete state[k];
+  render();
+});
+
+buildGrid();
+render();
+</script>
+</body>
+</html>
