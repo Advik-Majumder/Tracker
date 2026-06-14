@@ -70,6 +70,9 @@
   .btn.ghost:hover{background:#f3f6fb}
   .btn.green{background:var(--good);color:#fff}
   .btn.green:hover{background:#268a4e}
+  .btn.danger{background:#fff;border:1.5px solid var(--bad);color:var(--bad)}
+  .btn.danger:hover{background:var(--bad-bg)}
+  .btn-group{display:flex;gap:10px}
   .btn:disabled{opacity:.5;cursor:not-allowed}
   .top-actions{display:flex;gap:10px;align-items:flex-end}
   .save-row{display:flex;justify-content:flex-end;margin:20px 0 4px}
@@ -177,6 +180,10 @@
   table.results td.cls{font-weight:800}
   table.results td.pct{font-weight:700;text-align:right;font-variant-numeric:tabular-nums}
   table.results td.empty{color:#c0c8d2}
+  table.results td.del{width:42px;text-align:center;padding:6px}
+  .row-del{border:none;background:transparent;color:#c0c8d2;cursor:pointer;font-size:16px;
+    width:28px;height:28px;border-radius:6px;line-height:1;padding:0}
+  .row-del:hover{background:var(--bad-bg);color:var(--bad)}
   table.results tr:hover td{background:#fafbfd}
   .pct-good{color:var(--good)}.pct-mid{color:var(--okay)}.pct-low{color:var(--bad)}
   .grade-band td{background:#eef2f8 !important;font-weight:800;font-size:.8rem;letter-spacing:.5px;color:#46566b}
@@ -337,11 +344,15 @@
       </div>
       <span class="count-chip" id="weekCount">0 of 24 classes</span>
       <div style="flex:1"></div>
-      <button class="btn green" id="exportBtn">⬇ Download Excel</button>
+      <div class="btn-group">
+        <button class="btn ghost" id="copyBtn">Copy results</button>
+        <button class="btn green" id="exportBtn">Download Excel</button>
+      </div>
+      <button class="btn danger" id="delWeekBtn" style="margin-left:14px">Delete week</button>
     </div>
     <div class="res-table-wrap">
       <table class="results">
-        <thead><tr><th>Class</th><th style="text-align:right">Behaviour&nbsp;%</th><th style="text-align:right">Cleanliness&nbsp;%</th></tr></thead>
+        <thead><tr><th>Class</th><th style="text-align:right">Behaviour&nbsp;%</th><th style="text-align:right">Cleanliness&nbsp;%</th><th></th></tr></thead>
         <tbody id="resBody"></tbody>
       </table>
     </div>
@@ -652,14 +663,16 @@ function applyReading(p){
 
 /* ====== RESULTS TAB ====== */
 function pctClass(v){return v>=85?'pct-good':v>=70?'pct-mid':'pct-low';}
-function renderWeekPicker(){
+function renderWeekPicker(keepWeek){
   const wp=document.getElementById('weekPick');
-  const weeks=Object.keys(store).map(Number).sort((a,b)=>b-a);
+  const weeks=Object.keys(store).map(Number);
   const cur=parseInt(document.getElementById('weekNum').value,10);
-  if(!weeks.includes(cur))weeks.unshift(cur);
+  if(!weeks.includes(cur))weeks.push(cur);
+  if(keepWeek!=null && !weeks.includes(keepWeek))weeks.push(keepWeek);
+  weeks.sort((a,b)=>b-a);
   wp.innerHTML='';
   weeks.forEach(w=>{const o=document.createElement('option');o.value=w;o.textContent='Week '+w;wp.appendChild(o);});
-  wp.value=cur;
+  wp.value=(keepWeek!=null)?keepWeek:cur;
 }
 function renderResults(){
   renderWeekPicker();
@@ -673,22 +686,73 @@ function drawResultsTable(){
   let done=0;
   GRADES.forEach(g=>{
     const band=document.createElement('tr');band.className='grade-band';
-    band.innerHTML=`<td colspan="3">Grade ${g}</td>`;body.appendChild(band);
+    band.innerHTML=`<td colspan="4">Grade ${g}</td>`;body.appendChild(band);
     SECTIONS.forEach(s=>{
       const cls=g+s;const rec=data[cls];
       const tr=document.createElement('tr');
       if(rec){done++;
         tr.innerHTML=`<td class="cls">${cls}</td>
           <td class="pct ${pctClass(rec.beh)}">${rec.beh.toFixed(1)}%</td>
-          <td class="pct ${pctClass(rec.cln)}">${rec.cln.toFixed(1)}%</td>`;
+          <td class="pct ${pctClass(rec.cln)}">${rec.cln.toFixed(1)}%</td>
+          <td class="del"><button class="row-del" title="Delete ${cls} for week ${wk}" aria-label="Delete ${cls}">✕</button></td>`;
+        tr.querySelector('.row-del').addEventListener('click',()=>deleteClass(wk,cls));
       }else{
-        tr.innerHTML=`<td class="cls">${cls}</td><td class="pct empty">—</td><td class="pct empty">—</td>`;
+        tr.innerHTML=`<td class="cls">${cls}</td><td class="pct empty">—</td><td class="pct empty">—</td><td class="del"></td>`;
       }
       body.appendChild(tr);
     });
   });
   document.getElementById('weekCount').textContent=`${done} of 24 classes`;
 }
+
+/* ====== delete a single class for the selected week ====== */
+function deleteClass(wk,cls){
+  if(!store[wk]||!store[wk][cls])return;
+  if(!confirm(`Delete the score for class ${cls} in week ${wk}? This cannot be undone.`))return;
+  delete store[wk][cls];
+  if(store[wk] && Object.keys(store[wk]).length===0)delete store[wk];
+  saveStore();
+  renderWeekPicker(wk);
+  drawResultsTable();
+}
+
+/* ====== delete a whole week ====== */
+document.getElementById('delWeekBtn').addEventListener('click',()=>{
+  const wk=parseInt(document.getElementById('weekPick').value,10);
+  const data=store[wk]||{};
+  const n=Object.keys(data).length;
+  if(n===0){alert(`Week ${wk} has no saved scores to delete.`);return;}
+  if(!confirm(`Delete ALL ${n} saved class score${n>1?'s':''} for week ${wk}? This cannot be undone.`))return;
+  delete store[wk];
+  saveStore();
+  renderWeekPicker(wk);
+  drawResultsTable();
+});
+
+/* ====== copy results as a readable list ====== */
+document.getElementById('copyBtn').addEventListener('click',()=>{
+  const wk=parseInt(document.getElementById('weekPick').value,10);
+  const data=store[wk]||{};
+  let text=`Behaviour & Cleanliness — Week ${wk}\n\n`;
+  let any=false;
+  CLASSES.forEach(cls=>{
+    const r=data[cls];
+    if(r){any=true;text+=`${cls} — Behaviour ${r.beh.toFixed(1)}%, Cleanliness ${r.cln.toFixed(1)}%\n`;}
+  });
+  if(!any){alert(`Week ${wk} has no saved scores to copy.`);return;}
+  const btn=document.getElementById('copyBtn');
+  navigator.clipboard.writeText(text.trim()).then(()=>{
+    const old=btn.textContent;btn.textContent='Copied ✓';
+    setTimeout(()=>btn.textContent=old,1800);
+  }).catch(()=>{
+    // fallback for older browsers
+    const ta=document.createElement('textarea');ta.value=text.trim();document.body.appendChild(ta);
+    ta.select();try{document.execCommand('copy');}catch(e){}
+    document.body.removeChild(ta);
+    const old=btn.textContent;btn.textContent='Copied ✓';
+    setTimeout(()=>btn.textContent=old,1800);
+  });
+});
 
 /* ====== EXPORT (CSV that opens in Excel) ====== */
 document.getElementById('exportBtn').addEventListener('click',()=>{
