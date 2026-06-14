@@ -57,6 +57,25 @@
   .btn.green{background:var(--good);color:#fff}
   .btn.green:hover{background:#268a4e}
   .btn:disabled{opacity:.5;cursor:not-allowed}
+  .top-actions{display:flex;gap:10px;align-items:flex-end}
+  .save-row{display:flex;justify-content:flex-end;margin:20px 0 4px}
+  .btn.big{padding:14px 32px;font-size:1rem}
+  @media(max-width:620px){.save-row .btn.big{width:100%}}
+  @media(max-width:620px){
+    .top-actions{width:100%;margin-top:4px}
+    .top-actions .btn{flex:1}
+    .controls{padding:14px}
+    .field.cls{flex:1}
+    .field.cls select{width:100%}
+    /* compact dock: percentages stack tightly, pills kept */
+    .dock{padding:9px 12px}
+    .dock-inner{gap:9px}
+    .score{flex:1 1 100%;padding:9px 12px;gap:11px}
+    .score .pct{font-size:1.45rem;min-width:66px}
+    .score .meta{font-size:.7rem}
+    .breakdown{margin-top:4px;gap:6px}
+    body{padding-bottom:230px}
+  }
 
   /* ---------- photo panel ---------- */
   .photo-panel{
@@ -179,13 +198,16 @@
         <input type="number" id="weekNum" min="1" max="53" style="width:96px">
       </div>
       <div class="field" style="flex:1"></div>
+      <div class="top-actions">
+        <button class="btn ghost" id="clearBtn">Clear</button>
+      </div>
     </div>
 
     <div class="photo-panel">
       <h3>Read from photo <span style="font-weight:400;color:var(--muted);font-size:.85rem">(optional)</span></h3>
       <p class="hint">Take or choose a clear, flat photo of the whole sheet in good light. You'll preview it, then review the result before it's saved.</p>
       <div class="photo-actions">
-        <input type="file" id="fileInput" accept="image/*" capture="environment" class="hidden">
+        <input type="file" id="fileInput" accept="image/*" class="hidden">
         <button class="btn ghost" id="chooseBtn">📷 Take / choose photo</button>
         <button class="btn primary hidden" id="readBtn">Read this sheet</button>
         <button class="btn ghost hidden" id="retakeBtn">Choose a different photo</button>
@@ -197,6 +219,10 @@
     <div class="flag-banner" id="flagBanner"></div>
 
     <div class="grid" id="grid"></div>
+
+    <div class="save-row">
+      <button class="btn green big" id="saveBtn">Save &amp; next ›</button>
+    </div>
   </section>
 
   <!-- ===================== RESULTS TAB ===================== -->
@@ -239,10 +265,6 @@
         <div class="meta">Marked <b id="clnMarked">0</b>/10 &middot; Points <b id="clnPts">0</b>/30</div>
         <div class="breakdown" id="clnBreak"></div>
       </div>
-    </div>
-    <div class="dock-actions">
-      <button class="btn ghost" id="clearBtn">Clear</button>
-      <button class="btn green" id="saveBtn">Save &amp; next ›</button>
     </div>
   </div>
 </div>
