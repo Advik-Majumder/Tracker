@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Behaviour &amp; Cleanliness Tracker</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%232f5fce'/%3E%3Crect x='16' y='16' width='32' height='32' rx='7' fill='none' stroke='white' stroke-width='3.5'/%3E%3Cpath d='M23 32l6 7 13-15' fill='none' stroke='white' stroke-width='4.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <style>
   :root{
     --ink:#1b2330; --paper:#ffffff; --line:#c9d2dd; --line-strong:#8d9bad;
@@ -23,12 +24,25 @@
   .appbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;margin-bottom:14px}
   .appbar h1{font-size:1.3rem;margin:0;font-weight:800;letter-spacing:.2px}
   .appbar .sub{color:var(--muted);font-size:.85rem}
-  .tabs{display:flex;gap:6px;background:#e1e6ee;padding:5px;border-radius:12px;margin-left:auto}
+  .appbar-title{margin-right:auto}
+  .info-tab{
+    background:#fff;border:1.5px solid var(--line-strong);border-radius:11px;
+    padding:9px 16px;font-weight:700;font-size:.9rem;cursor:pointer;color:var(--accent);
+    box-shadow:var(--shadow);transition:.15s;flex:none;
+  }
+  .info-tab:hover{background:#f3f6fb}
+  .info-tab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .tabs{display:flex;gap:6px;background:#e1e6ee;padding:5px;border-radius:12px}
   .tab{
     border:none;background:transparent;padding:9px 18px;border-radius:9px;font-weight:700;
     font-size:.9rem;cursor:pointer;color:var(--muted);transition:.15s;
   }
   .tab.active{background:#fff;color:var(--ink);box-shadow:var(--shadow)}
+  @media(max-width:620px){
+    .appbar-title{order:-1;width:100%;margin-right:0}
+    .info-tab{flex:none}
+    .tabs{margin-left:auto}
+  }
 
   /* ---------- controls row ---------- */
   .controls{
@@ -169,13 +183,32 @@
   .summary-meta{color:var(--muted);font-size:.85rem;margin:2px 0 0}
   .hidden{display:none !important}
   .count-chip{background:#eef2f8;border-radius:20px;padding:3px 11px;font-size:.78rem;font-weight:700;color:#46566b}
+
+  /* ---------- info tab ---------- */
+  .info-wrap{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+  .info-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 20px;box-shadow:var(--shadow)}
+  .info-card.intro{background:#f5f8ff;border-color:#cfe0ff}
+  .info-card.warn{background:var(--flag-bg);border-color:#f3c98a}
+  .info-card h2{margin:0 0 8px;font-size:1.15rem}
+  .info-card h3{margin:0 0 10px;font-size:1rem;display:flex;align-items:center;gap:10px}
+  .info-card p{margin:0 0 10px;font-size:.92rem;color:#33404f;line-height:1.55}
+  .info-card p:last-child{margin-bottom:0}
+  .info-card ul{margin:0;padding-left:20px}
+  .info-card li{font-size:.92rem;color:#33404f;line-height:1.55;margin-bottom:7px}
+  .info-card li:last-child{margin-bottom:0}
+  .step-no{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;
+    border-radius:50%;background:var(--accent);color:#fff;font-size:.85rem;font-weight:800;flex:none}
+  .info-card .tip{background:#eef3ff;border-radius:8px;padding:9px 12px;font-size:.86rem;color:#2850b8}
+  .info-card.warn h3{color:#9a5a10}
+  .flag-word{color:var(--flag)}
 </style>
 </head>
 <body>
 <div class="wrap">
 
   <div class="appbar">
-    <div>
+    <button class="tab info-tab" data-tab="info" title="How to use this app" aria-label="Information">ⓘ Info</button>
+    <div class="appbar-title">
       <h1>Behaviour &amp; Cleanliness Tracker</h1>
       <div class="sub">2026&ndash;27 &middot; weekly</div>
     </div>
@@ -184,6 +217,76 @@
       <button class="tab" data-tab="results">Results</button>
     </div>
   </div>
+
+  <!-- ===================== INFO TAB ===================== -->
+  <section id="tab-info" class="hidden">
+    <div class="info-wrap">
+
+      <div class="info-card intro">
+        <h2>What this app does</h2>
+        <p>This app works out the weekly <b>Behaviour</b> and <b>Cleanliness</b> score for each class from its paper tracker sheet. You take a photo of the sheet, the app reads the ticks for you, you check it, and it gives you two percentages. You do this once for each of the 24 classes every week.</p>
+      </div>
+
+      <div class="info-card">
+        <h3><span class="step-no">1</span> Pick the class and check the week</h3>
+        <p>At the top of <b>Enter sheet</b>, choose the class whose sheet you are holding from the <b>Class</b> dropdown. It starts empty on purpose, so you always choose consciously — you cannot save without picking one.</p>
+        <p>The <b>Week no.</b> fills in automatically from today's date. You only change it if you are entering a sheet for a different week.</p>
+      </div>
+
+      <div class="info-card">
+        <h3><span class="step-no">2</span> Read the sheet from a photo</h3>
+        <p>Tap <b>Take / choose photo</b>. Your phone lets you either take a new photo or pick one from your gallery. Take a clear, flat photo of the whole sheet in good light, with no shadow or blur.</p>
+        <p>You will see a preview. If it looks good, tap <b>Read this sheet</b>. Wait a few seconds — the app is reading all the ticks. If the photo is bad, tap <b>Choose a different photo</b> and try again.</p>
+        <p class="tip">Tip: you don't have to use a photo at all. You can fill the sheet in by hand instead (see step 4). The photo is just there to save time.</p>
+      </div>
+
+      <div class="info-card">
+        <h3><span class="step-no">3</span> Check the result carefully</h3>
+        <p>The grid fills in automatically with what the app read — green for Good, amber for Okay, red for Bad, and empty for blank (unsigned) rows.</p>
+        <p>Some rows may be <b class="flag-word">highlighted in orange</b>. These are rows the app was not fully sure about. A banner at the top tells you how many. Look at each highlighted row and compare it with the paper:</p>
+        <ul>
+          <li>If it is <b>wrong</b>, tap the correct face to fix it.</li>
+          <li>If it is <b>correct</b> (including a correct blank row), tap the orange <b>✓</b> on that row to confirm it.</li>
+          <li>Or use <b>Confirm all as correct</b> in the banner if every highlighted row is fine.</li>
+        </ul>
+        <p>You can change <i>any</i> row at any time, not just the highlighted ones — just tap a face to set it, or tap it again to clear it back to blank.</p>
+      </div>
+
+      <div class="info-card">
+        <h3><span class="step-no">4</span> Marking by hand (no photo)</h3>
+        <p>If you'd rather not use a photo, just click the faces directly to match the paper sheet. Each row has Good, Okay and Bad. A row you leave untouched counts as blank. This works exactly the same and costs nothing.</p>
+      </div>
+
+      <div class="info-card">
+        <h3><span class="step-no">5</span> Read the score and save</h3>
+        <p>At the bottom of the screen, two cards always show the live <b>Behaviour %</b> and <b>Cleanliness %</b>, with a breakdown of how many Good, Okay, Bad and Blank there are. The score updates as you make changes.</p>
+        <p>When you are happy, scroll to the bottom and tap <b>Save &amp; next ›</b>. This saves the score for that class and that week. The class dropdown then resets to empty, ready for the next sheet.</p>
+        <p class="tip">If a class already has a score saved for that week, it asks before overwriting — so you never get duplicates.</p>
+      </div>
+
+      <div class="info-card">
+        <h3><span class="step-no">6</span> See and download all results</h3>
+        <p>Go to the <b>Results</b> tab. Pick a week, and you'll see all 24 classes grouped by grade, with each one's Behaviour % and Cleanliness %. Classes you haven't done yet show a dash (—). The chip tells you how many of 24 are done.</p>
+        <p>Tap <b>Download Excel</b> to save that week's table as a spreadsheet file — this is how you share the results with the school and keep a record.</p>
+      </div>
+
+      <div class="info-card warn">
+        <h3>Important things to remember</h3>
+        <ul>
+          <li><b>Use one device for the whole week.</b> Scores are saved on the device you're using, not in a shared place. Do all the sheets for a week on the same phone or laptop.</li>
+          <li><b>Always download the Excel file after finishing a week.</b> That's your safe copy. If the browser data is ever cleared, anything not downloaded is lost.</li>
+          <li><b>Always check before saving.</b> The app reads the sheet, but you confirm it. A quick look at the highlighted rows is all it takes.</li>
+        </ul>
+      </div>
+
+      <div class="info-card">
+        <h3>How the score is worked out</h3>
+        <p>Each mark is worth points: <b>Good = 3, Okay = 2, Bad = 1, Blank = 0</b>. The percentage is the points earned out of the maximum possible (every slot counted as if it were Good).</p>
+        <p>This means <b>blank (unsigned) periods lower the score</b> — they count in the total but earn nothing. Behaviour is out of 50 periods a week; Cleanliness is out of 10. The two are worked out completely separately.</p>
+      </div>
+
+    </div>
+  </section>
 
   <!-- ===================== ENTRY TAB ===================== -->
   <section id="tab-entry">
@@ -408,10 +511,12 @@ document.querySelectorAll('.tab').forEach(t=>{
     document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
     t.classList.add('active');
     const which=t.dataset.tab;
+    document.getElementById('tab-info').classList.toggle('hidden',which!=='info');
     document.getElementById('tab-entry').classList.toggle('hidden',which!=='entry');
     document.getElementById('tab-results').classList.toggle('hidden',which!=='results');
     document.getElementById('dock').style.display=(which==='entry')?'':'none';
     if(which==='results')renderResults();
+    if(which==='info')window.scrollTo({top:0,behavior:'smooth'});
   });
 });
 
