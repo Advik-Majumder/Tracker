@@ -110,6 +110,14 @@
   tr.flagged{background:var(--flag-bg)}
   tr.flagged td.no,tr.flagged td.lbl{color:var(--flag)}
   tr.flagged td:first-child{box-shadow:inset 3px 0 0 var(--flag)}
+  td.confirm{width:30px;padding:2px}
+  .confirm-btn{
+    width:24px;height:24px;border-radius:6px;border:1.5px solid var(--flag);background:var(--flag-bg);
+    color:var(--flag);cursor:pointer;display:none;align-items:center;justify-content:center;padding:0;
+    font-size:14px;line-height:1;font-weight:900;
+  }
+  tr.flagged .confirm-btn{display:inline-flex}
+  .confirm-btn:hover{background:var(--flag);color:#fff}
 
   /* ---------- results dock ---------- */
   .dock{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line-strong);
@@ -292,16 +300,26 @@ function toggle(id,kind){
   if(flagged.has(id)){flagged.delete(id);}   // touching a flagged row clears its flag
   render();
 }
+function confirmRow(id){
+  flagged.delete(id);
+  render();
+}
 function buildBlock(title,rows,isClean){
   const block=document.createElement('div');block.className='block'+(isClean?' clean':'');
   const h=document.createElement('h2');h.textContent=title;block.appendChild(h);
   const table=document.createElement('table');
-  table.innerHTML=`<thead><tr><th class="${isClean?'col-lbl':'col-no'}">${isClean?'Day':'No.'}</th><th>Good</th><th>Okay</th><th>Bad</th></tr></thead>`;
+  table.innerHTML=`<thead><tr><th class="${isClean?'col-lbl':'col-no'}">${isClean?'Day':'No.'}</th><th>Good</th><th>Okay</th><th>Bad</th><th class="col-confirm"></th></tr></thead>`;
   const tb=document.createElement('tbody');
   rows.forEach(rd=>{
     const tr=document.createElement('tr');tr.dataset.row=rd.id;
     const first=document.createElement('td');first.className=isClean?'lbl':'no';first.textContent=rd.label;tr.appendChild(first);
     ORDER.forEach(kind=>{const td=document.createElement('td');td.className='cell';td.appendChild(makeFace(rd.id,kind));tr.appendChild(td);});
+    const ctd=document.createElement('td');ctd.className='confirm';
+    const cb=document.createElement('button');cb.className='confirm-btn';cb.type='button';
+    cb.innerHTML='✓';cb.title='Confirm this row is correct';
+    cb.setAttribute('aria-label','Confirm row '+rd.label);
+    cb.addEventListener('click',()=>confirmRow(rd.id));
+    ctd.appendChild(cb);tr.appendChild(ctd);
     tb.appendChild(tr);
   });
   table.appendChild(tb);block.appendChild(table);return block;
@@ -347,7 +365,11 @@ function render(){
 
   // flag banner
   const fb=document.getElementById('flagBanner');
-  if(flagged.size){fb.classList.add('show');fb.textContent=`⚠ ${flagged.size} row${flagged.size>1?'s':''} need a quick check — highlighted below. Confirm or fix, then Save.`;}
+  if(flagged.size){fb.classList.add('show');
+    fb.innerHTML=`⚠ ${flagged.size} row${flagged.size>1?'s':''} need a quick check — highlighted below. For each: fix it by clicking a face, or tap the orange ✓ to confirm it's correct (including blank rows). <button class="btn ghost" id="confirmAllBtn" style="padding:4px 12px;min-height:auto;font-size:.82rem;margin-left:6px">Confirm all as correct</button>`;
+    const ca=document.getElementById('confirmAllBtn');
+    if(ca)ca.addEventListener('click',()=>{flagged.clear();render();});
+  }
   else fb.classList.remove('show');
 }
 
