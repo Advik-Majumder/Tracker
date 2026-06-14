@@ -304,6 +304,10 @@ function isoWeek(d){
 /* ====== build dropdowns ====== */
 function buildClassDropdown(){
   const sel=document.getElementById('classSel');
+  sel.innerHTML='';
+  const ph=document.createElement('option');
+  ph.value='';ph.textContent='— Select class —';ph.disabled=true;ph.selected=true;
+  sel.appendChild(ph);
   CLASSES.forEach(c=>{
     const o=document.createElement('option');o.value=c;o.textContent='Class '+c;sel.appendChild(o);
   });
@@ -420,10 +424,11 @@ function saveStore(){
   try{localStorage.setItem(STORAGE_KEY,JSON.stringify(store));}catch(e){/* private mode: stays in memory */}
 }
 
-/* ====== SAVE & NEXT ====== */
+/* ====== SAVE ====== */
 document.getElementById('saveBtn').addEventListener('click',()=>{
   const cls=document.getElementById('classSel').value;
   const wk=parseInt(document.getElementById('weekNum').value,10);
+  if(!cls){alert('Please select a class before saving.');document.getElementById('classSel').focus();return;}
   if(!wk){alert('Please set a week number first.');return;}
   const s=currentScores();
   if(s.beh.marked===0 && s.cln.marked===0){
@@ -435,14 +440,12 @@ document.getElementById('saveBtn').addEventListener('click',()=>{
   }
   store[wk][cls]={beh:+s.beh.pct.toFixed(1),cln:+s.cln.pct.toFixed(1)};
   saveStore();
-  // advance to next class in list
-  const idx=CLASSES.indexOf(cls);
-  const next=CLASSES[(idx+1)%CLASSES.length];
-  document.getElementById('classSel').value=next;
+  // reset to empty class so next sheet must be chosen consciously
+  document.getElementById('classSel').selectedIndex=0;
   clearGrid();
   resetPhoto();
-  // brief confirmation
-  flash(`Saved ${cls} — Behaviour ${s.beh.pct.toFixed(1)}%, Cleanliness ${s.cln.pct.toFixed(1)}%. Now on ${next}.`);
+  window.scrollTo({top:0,behavior:'smooth'});
+  flash(`Saved ${cls} — Behaviour ${s.beh.pct.toFixed(1)}%, Cleanliness ${s.cln.pct.toFixed(1)}%. Select the next class to continue.`);
 });
 document.getElementById('clearBtn').addEventListener('click',clearGrid);
 
